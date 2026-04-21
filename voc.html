@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>英単語穴埋めクイズ</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111418;
+      --bg-elevated: #1a1f26;
+      --surface: #20262e;
+      --surface-strong: #27303a;
+      --surface-soft: #242b34;
+      --line: rgba(255, 255, 255, 0.09);
+      --text: #f2f3f7;
+      --text-muted: #b7bdc9;
+      --primary: #7ec4f4;
+      --primary-strong: #68b4e8;
+      --secondary: #91a7ff;
+      --success: #7fe3b3;
+      --error: #ff8c8c;
+      --radius-xl: 32px;
+      --radius-lg: 24px;
+      --radius-md: 18px;
+      --radius-sm: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      min-height: 100%;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Noto Sans JP", "Noto Sans", "Hiragino Sans", "Yu Gothic UI", sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      padding: 32px 20px 56px;
+      overflow-x: hidden;
+    }
+
+    .background-grid {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .background-grid {
+      opacity: 0.08;
+    }
+
+    .app-shell {
+      position: relative;
+      z-index: 1;
+      max-width: 920px;
+      margin: 0 auto;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .panel {
+      position: relative;
+      overflow: hidden;
+      background: var(--bg-elevated);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+    }
+
+    .gate-shell {
+      position: relative;
+      z-index: 1;
+      max-width: 520px;
+      margin: 8vh auto 0;
+    }
+
+    .gate-card {
+      padding: 28px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .gate-title {
+      margin: 0;
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      line-height: 1.1;
+      letter-spacing: -0.04em;
+    }
+
+    .gate-text {
+      margin: 0;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    .gate-visual {
+      width: 72px;
+      height: 72px;
+      color: var(--primary);
+    }
+
+    .gate-form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .gate-error {
+      min-height: 24px;
+      margin: 0;
+      color: var(--error);
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .controls-panel {
+      padding: 18px;
+      margin-bottom: 22px;
+    }
+
+    #controls {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    button {
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .mode-button {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 20px;
+      border-radius: var(--radius-md);
+      text-align: left;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      color: var(--text);
+      min-height: 96px;
+    }
+
+    .mode-button .mode-title {
+      display: block;
+      font-weight: 700;
+      font-size: clamp(1.25rem, 2.1vw, 1.65rem);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .mode-copy {
+      min-width: 0;
+    }
+
+    .mode-button.active {
+      background: #233240;
+      border-color: rgba(126, 196, 244, 0.34);
+    }
+
+    .mode-visual {
+      width: 44px;
+      height: 44px;
+      flex: 0 0 auto;
+      color: var(--primary);
+      opacity: 0.95;
+    }
+
+    .card {
+      padding: 24px;
+    }
+
+    .quiz-card {
+      display: grid;
+      gap: 18px;
+      text-align: left;
+    }
+
+    .quiz-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .quiz-chip-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .quiz-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: var(--surface);
+      color: var(--text-muted);
+      border: 1px solid var(--line);
+      font-size: 0.92rem;
+    }
+
+    .quiz-chip strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .progress-wrap {
+      position: relative;
+      width: min(280px, 100%);
+      padding-top: 18px;
+    }
+
+    .progress {
+      position: relative;
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      position: absolute;
+      inset: 0 auto 0 0;
+      border-radius: inherit;
+      background: var(--success);
+    }
+
+    .progress-bonus {
+      position: absolute;
+      right: 0;
+      top: 0;
+      color: var(--success);
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      opacity: 0;
+      transform: translateY(0);
+      pointer-events: none;
+    }
+
+    .progress-bonus.show {
+      animation: progressBonusFloat 0.65s ease-out forwards;
+    }
+
+    .prompt-block {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+    }
+
+    .prompt-label {
+      margin: 0 0 10px;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .prompt-text {
+      margin: 0;
+      font-size: clamp(1.05rem, 2vw, 1.28rem);
+      line-height: 1.8;
+      color: var(--text);
+    }
+
+    .answer-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: stretch;
+    }
+
+    input {
+      flex: 1 1 260px;
+      min-width: 0;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: 18px;
+      padding: 16px 18px;
+      outline: none;
+      font-size: 1rem;
+    }
+
+    input:focus {
+      border-color: rgba(126, 196, 244, 0.52);
+      background: var(--surface-strong);
+    }
+
+    .primary-button {
+      padding: 16px 22px;
+      border-radius: 18px;
+      background: var(--primary);
+      color: #0b2230;
+      font-weight: 700;
+    }
+
+    .choices-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .choice-button {
+      padding: 18px;
+      border-radius: 20px;
+      text-align: left;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      color: var(--text);
+      font-weight: 600;
+      min-height: 68px;
+      line-height: 1.5;
+    }
+
+    .choice-button.correct {
+      border-color: var(--success);
+    }
+
+    .choice-button.incorrect {
+      border-color: var(--error);
+      animation: choiceShake 0.28s ease-in-out 1;
+    }
+
+    @keyframes progressBonusFloat {
+      0% {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      20% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+    }
+
+    @keyframes choiceShake {
+      0%, 100% {
+        transform: translateX(0);
+      }
+      25% {
+        transform: translateX(-3px);
+      }
+      50% {
+        transform: translateX(3px);
+      }
+      75% {
+        transform: translateX(-2px);
+      }
+    }
+
+    .result {
+      min-height: 30px;
+      margin-top: 6px;
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.01em;
+    }
+
+    .helper-note {
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      margin: 0;
+    }
+
+    @media (max-width: 780px) {
+      body {
+        padding: 18px 14px 36px;
+      }
+
+      #controls {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .choices-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 520px) {
+      #controls {
+        grid-template-columns: 1fr;
+      }
+
+      .card,
+      .controls-panel {
+        padding: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+<svg class="background-grid" viewBox="0 0 1600 900" aria-hidden="true">
+  <defs>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M 48 0 L 0 0 0 48" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1600" height="900" fill="url(#grid)"></rect>
+</svg>
+
+<section class="gate-shell" id="gateScreen">
+  <div class="gate-card panel">
+    <svg class="gate-visual" viewBox="0 0 80 80" aria-hidden="true">
+      <rect x="16" y="34" width="48" height="30" rx="10" fill="none" stroke="currentColor" stroke-width="2.5"></rect>
+      <path d="M28 34v-8c0-7.2 5.5-12 12-12s12 4.8 12 12v8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></path>
+      <circle cx="40" cy="48" r="4" fill="currentColor"></circle>
+    </svg>
+    <div>
+      <h1 class="gate-title">アクセスコード</h1>
+      <p class="gate-text">初回アクセス時のみコードの入力が必要です。認証が完了すると、次回以降はこの画面を表示せずに開きます。</p>
+    </div>
+    <div class="gate-form">
+      <input id="accessCode" type="password" inputmode="numeric" placeholder="アクセスコードを入力">
+      <button class="primary-button" onclick="submitAccessCode()">開く</button>
+      <p class="gate-error" id="gateError"></p>
+    </div>
+  </div>
+</section>
+
+<main class="app-shell hidden" id="appShell">
+  <section class="controls-panel panel">
+    <div id="controls"></div>
+  </section>
+
+  <section class="card panel" id="quiz"></section>
+</main>
+
+<script>
+// ===== データ =====
+let questions = [
+  { word:"agreement", pos:"n", def:"A formal decision about future action.", jp:"合意、契約", sentence:"I think you get his _______ to this proposal."},
+  { word:"arise", pos:"v", def:"To arise is to happen.", jp:"起こる、生じる", sentence:"Difficulties _______ with his computer because it was old."},
+  { word:"benefactor", pos:"n", def:"A benefactor is a person who gives money to help someone.", jp:"恩人、支援者", sentence:"The student's _______ gave him money to spend on his studies."},
+  { word:"blacksmith", pos:"n", def:"A blacksmith is a person who makes things out of metal.", jp:"鍛冶屋", sentence:"The _______ pounded the piece of metal until it was flat."},
+  { word:"chimney", pos:"n", def:"A chimney is a tall pipe used to carry smoke out of a building.", jp:"煙突", sentence:"The cat was sitting on the roof next to the _______."},
+  { word:"compensate", pos:"v", def:"To compensate is to pay someone for the time they spent doing something.", jp:"補償する、埋め合わせる", sentence:"Her boss _______ her for the extra work she did last week."},
+  { word:"encounter", pos:"v", def:"To encounter is to find or meet a person or thing.", jp:"出会う、遭遇する", sentence:"I _______ a sea turtle while I was swimming."},
+  { word:"exceed", pos:"v", def:"To exceed is to be more than something.", jp:"超える", sentence:"Since I _______ my limit, I decided to get rid of my credit cards."},
+  { word:"forge", pos:"v", def:"To forge is to make or produce, especially with difficulty.", jp:"築く、作り出す（特に困難を伴って）", sentence:"Stacy and Heather _______ their friendship when they were teenagers."},
+  { word:"humble", pos:"adj", def:"People who are humble do not believe that they are better than others.", jp:"謙虚な", sentence:"Even though Bob is the smartest boy in his class, he is _______."},
+  { word:"iron", pos:"n", def:"Iron is a strong metal that is used to make many objects.", jp:"鉄", sentence:"The horse had shoes made of _______."},
+  { word:"ladder", pos:"n", def:"A ladder is an object that is used to climb up and down things.", jp:"はしご", sentence:"He used a _______ to climb to the top of his tree house."},
+  { word:"modest", pos:"adj", def:"If people are modest, they do not think that they are too important.", jp:"控えめな、謙虚な", sentence:"Derek is very _______ for someone who is so rich."},
+  { word:"occupy", pos:"v", def:"To occupy a place is to live, work, or be there.", jp:"占める、占有する", sentence:"Kevin and Alice _______ the chairs and had a long discussion."},
+  { word:"penny", pos:"n", def:"A penny is a coin worth one cent.", jp:"1セント硬貨", sentence:"US President Abraham Lincoln is on the _______."},
+  { word:"preach", pos:"v", def:"To preach is to talk about and promote a religious idea.", jp:"説教する、布教する", sentence:"Aaron often _______ about living an honest life."},
+  { word:"prosper", pos:"v", def:"To prosper is to be successful or make a lot of money.", jp:"繁栄する、成功する", sentence:"Frank's new business finally _______ after many years of hard work."},
+  { word:"province", pos:"n", def:"A province is an area that is controlled by a country.", jp:"州、地方", sentence:"Canada is divided into several different _______."},
+  { word:"satisfaction", pos:"n", def:"Satisfaction is the feeling of having done or received something good.", jp:"満足", sentence:"Brad was filled with _______ when he saw what was for dinner."},
+  { word:"sustain", pos:"v", def:"To sustain something is to keep it going.", jp:"維持する、支える", sentence:"Wind power is a clean way to _______ a city with energy."}
+];
+
+const jpMap = Object.fromEntries(questions.map(q => [q.word, q.jp]));
+
+// ===== 共通 =====
+let current = 0;
+let mode = 'fill';
+let questionOrder = [];
+let warmupOrder = [];
+const controls = document.getElementById('controls');
+const gateScreen = document.getElementById('gateScreen');
+const appShell = document.getElementById('appShell');
+const ACCESS_CODE = '1234';
+const ACCESS_COOKIE = 'voc_access_granted';
+
+function setCookie(name, value, days) {
+  const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+}
+
+function getCookie(name) {
+  const prefix = `${name}=`;
+  const cookies = document.cookie ? document.cookie.split('; ') : [];
+  for (const cookie of cookies) {
+    if (cookie.startsWith(prefix)) {
+      return decodeURIComponent(cookie.slice(prefix.length));
+    }
+  }
+  return '';
+}
+
+function unlockApp() {
+  gateScreen.classList.add('hidden');
+  appShell.classList.remove('hidden');
+  setMode('fill');
+}
+
+function submitAccessCode() {
+  const input = document.getElementById('accessCode');
+  const error = document.getElementById('gateError');
+  const code = input.value.trim();
+
+  if (code === ACCESS_CODE) {
+    setCookie(ACCESS_COOKIE, '1', 30);
+    error.textContent = '';
+    unlockApp();
+    return;
+  }
+
+  error.textContent = 'アクセスコードが違います。';
+  input.select();
+}
+
+function getModeLabel(value) {
+  const labels = {
+    fill: '通常',
+    easy: '4択',
+    warmup_je: '日→英',
+    warmup_ej: '英→日'
+  };
+  return labels[value] || value;
+}
+
+function getTotalCount() {
+  return mode === 'fill' || mode === 'easy' ? questions.length : warmupOrder.length;
+}
+
+function getProgressWidth() {
+  const total = getTotalCount();
+  if (!total) return '0%';
+  return `${((current + 1) / total) * 100}%`;
+}
+
+function renderCard(title, promptTitle, promptText, body) {
+  document.getElementById("quiz").innerHTML = `
+    <div class="quiz-card">
+      <div class="quiz-topbar">
+        <div class="quiz-chip-wrap">
+          <div class="quiz-chip"><strong>${getModeLabel(mode)}</strong></div>
+          <div class="quiz-chip">Question <strong>${current + 1}</strong> / ${getTotalCount()}</div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bonus" id="progressBonus">+1</div>
+          <div class="progress" aria-hidden="true">
+            <div class="progress-bar" style="width: ${getProgressWidth()}"></div>
+          </div>
+        </div>
+      </div>
+      <div class="prompt-block">
+        <p class="prompt-label">${title}</p>
+        <p class="prompt-text"><strong>${promptTitle}</strong><br>${promptText}</p>
+      </div>
+      ${body}
+    </div>
+  `;
+}
+
+function updateControls() {
+  controls.innerHTML = `
+    <button class="mode-button ${mode === 'fill' ? 'active' : ''}" onclick="setMode('fill')">
+      <span class="mode-copy">
+        <span class="mode-title">通常</span>
+      </span>
+      <svg class="mode-visual" viewBox="0 0 48 48" aria-hidden="true">
+        <rect x="7" y="7" width="34" height="34" rx="10" fill="none" stroke="currentColor" stroke-width="2"></rect>
+        <path d="M15 18h18" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"></path>
+        <path d="M15 25h12" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"></path>
+        <path d="M15 32h9" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"></path>
+      </svg>
+    </button>
+    <button class="mode-button ${mode === 'easy' ? 'active' : ''}" onclick="setMode('easy')">
+      <span class="mode-copy">
+        <span class="mode-title">4択</span>
+      </span>
+      <svg class="mode-visual" viewBox="0 0 48 48" aria-hidden="true">
+        <rect x="8" y="8" width="13" height="13" rx="4" fill="none" stroke="currentColor" stroke-width="2"></rect>
+        <rect x="27" y="8" width="13" height="13" rx="4" fill="none" stroke="currentColor" stroke-width="2"></rect>
+        <rect x="8" y="27" width="13" height="13" rx="4" fill="none" stroke="currentColor" stroke-width="2"></rect>
+        <rect x="27" y="27" width="13" height="13" rx="4" fill="none" stroke="currentColor" stroke-width="2"></rect>
+      </svg>
+    </button>
+    <button class="mode-button ${mode === 'warmup_je' ? 'active' : ''}" onclick="setMode('warmup_je')">
+      <span class="mode-copy">
+        <span class="mode-title">日→英</span>
+      </span>
+      <svg class="mode-visual" viewBox="0 0 48 48" aria-hidden="true">
+        <path d="M10 24h22" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
+        <path d="M25 16l8 8-8 8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+        <rect x="8" y="10" width="10" height="10" rx="3" fill="none" stroke="currentColor" stroke-width="2"></rect>
+      </svg>
+    </button>
+    <button class="mode-button ${mode === 'warmup_ej' ? 'active' : ''}" onclick="setMode('warmup_ej')">
+      <span class="mode-copy">
+        <span class="mode-title">英→日</span>
+      </span>
+      <svg class="mode-visual" viewBox="0 0 48 48" aria-hidden="true">
+        <path d="M38 24H16" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
+        <path d="M23 16l-8 8 8 8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+        <circle cx="34" cy="14" r="6" fill="none" stroke="currentColor" stroke-width="2"></circle>
+      </svg>
+    </button>
+  `;
+}
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+function escapeRegExp(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function maskDefinition(definition, word) {
+  const pattern = new RegExp(`\\b${escapeRegExp(word)}\\b`, 'gi');
+  return definition.replace(pattern, '___');
+}
+
+function markChoice(button, isCorrect) {
+  button.classList.add(isCorrect ? 'correct' : 'incorrect');
+
+  if (!isCorrect) {
+    setTimeout(() => {
+      button.classList.remove('incorrect');
+    }, 900);
+  }
+}
+
+function showProgressBonus() {
+  const bonus = document.getElementById("progressBonus");
+  if (!bonus) return;
+  bonus.classList.remove("show");
+  void bonus.offsetWidth;
+  bonus.classList.add("show");
+}
+
+function handleCorrect() {
+  showProgressBonus();
+  setTimeout(() => next(), 500);
+}
+
+function next() {
+  current++;
+
+  if (mode === 'fill' || mode === 'easy') {
+    if (current >= questionOrder.length) {
+      questionOrder = [...questions.keys()];
+      shuffle(questionOrder);
+      current = 0;
+    }
+    mode === 'easy' ? showEasy() : showFill();
+
+  } else {
+    if (current >= warmupOrder.length) {
+      shuffle(warmupOrder);
+      current = 0;
+    }
+    showWarmup();
+  }
+}
+
+// ===== 通常モード =====
+function showFill() {
+  const q = questions[questionOrder[current]];
+  renderCard(
+    'Fill In The Blank',
+    maskDefinition(q.def, q.word),
+    q.sentence,
+    `
+      <div class="answer-row">
+        <input id="answer" placeholder="英単語を入力">
+        <button class="primary-button" onclick="checkFill()">答え合わせ</button>
+      </div>
+      <div id="result" class="result"></div>
+    `
+  );
+  document.getElementById("answer").addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      checkFill();
+    }
+  });
+}
+
+function checkFill() {
+  const user = document.getElementById("answer").value.toLowerCase();
+  const correct = questions[questionOrder[current]].word;
+  const result = document.getElementById("result");
+
+  if (user === correct) {
+    result.textContent = "正解！";
+    result.style.color = "green";
+    handleCorrect();
+  } else {
+    result.textContent = `不正解… ${correct}`;
+    result.style.color = "red";
+  }
+}
+
+// ===== 簡単4択 =====
+function showEasy() {
+  const q = questions[questionOrder[current]];
+  const choices = getChoices(q.word, questions.map(x=>x.word));
+
+  renderCard(
+    'Multiple Choice',
+    maskDefinition(q.def, q.word),
+    'もっとも合う英単語を1つ選んでください。',
+    `
+      <div class="choices-grid">
+        ${choices.map(c=>`<button class="choice-button" onclick="checkEasy(this, '${c}')">${c}</button>`).join('')}
+      </div>
+    `
+  );
+}
+
+function checkEasy(button, selected) {
+  const correct = questions[questionOrder[current]].word;
+
+  if (selected === correct) {
+    markChoice(button, true);
+    handleCorrect();
+  } else {
+    markChoice(button, false);
+  }
+}
+
+// ===== ウォームアップ =====
+function showWarmup() {
+  const word = warmupOrder[current];
+
+  if (mode === 'warmup_je') {
+    const jp = jpMap[word];
+    const choices = getChoices(word, Object.keys(jpMap));
+
+    renderCard(
+      'Warmup',
+      jp,
+      '日本語に対応する英単語を選んでください。',
+      `
+        <div class="choices-grid">
+          ${choices.map(c=>`<button class="choice-button" onclick="checkWarmJE(this, '${c}')">${c}</button>`).join('')}
+        </div>
+      `
+    );
+
+  } else {
+    const jp = jpMap[word];
+    const choices = getChoices(jp, Object.values(jpMap));
+
+    renderCard(
+      'Warmup',
+      word,
+      '英単語に対応する日本語を選んでください。',
+      `
+        <div class="choices-grid">
+          ${choices.map(c=>`<button class="choice-button" onclick="checkWarmEJ(this, '${c}')">${c}</button>`).join('')}
+        </div>
+      `
+    );
+  }
+}
+
+function checkWarmJE(button, selected) {
+  const correct = warmupOrder[current];
+
+  if (selected === correct) {
+    markChoice(button, true);
+    handleCorrect();
+  } else {
+    markChoice(button, false);
+  }
+}
+
+function checkWarmEJ(button, selected) {
+  const correct = jpMap[warmupOrder[current]];
+
+  if (selected === correct) {
+    markChoice(button, true);
+    handleCorrect();
+  } else {
+    markChoice(button, false);
+  }
+}
+
+// ===== 共通 =====
+function getChoices(correct, pool) {
+  const set = new Set([correct]);
+  while (set.size < 4) {
+    set.add(pool[Math.floor(Math.random()*pool.length)]);
+  }
+  const arr = [...set];
+  shuffle(arr);
+  return arr;
+}
+
+// ===== モード切替 =====
+function setMode(m) {
+  mode = m;
+  current = 0;
+  updateControls();
+
+  if (m === 'fill') {
+    questionOrder = [...questions.keys()];
+    shuffle(questionOrder);
+    showFill();
+  } else if (m === 'easy') {
+    questionOrder = [...questions.keys()];
+    shuffle(questionOrder);
+    showEasy();
+  } else {
+    warmupOrder = Object.keys(jpMap);
+    shuffle(warmupOrder);
+    showWarmup();
+  }
+}
+
+// ===== 簡易テスト =====
+(function test(){
+  const sample = getChoices('a', ['a','b','c','d','e']);
+  console.assert(sample.length === 4, 'choices should be 4');
+  console.assert(sample.includes('a'), 'choices must include correct');
+})();
+
+if (getCookie(ACCESS_COOKIE) === '1') {
+  unlockApp();
+} else {
+  document.getElementById('accessCode').addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      submitAccessCode();
+    }
+  });
+}
+</script>
+
+</body>
+</html>
