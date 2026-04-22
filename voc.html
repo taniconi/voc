@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vocabulary Quiz</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111418;
+      --bg-elevated: #1a1f26;
+      --surface: #20262e;
+      --surface-strong: #27303a;
+      --surface-soft: #242b34;
+      --line: rgba(255, 255, 255, 0.09);
+      --text: #f2f3f7;
+      --text-muted: #b7bdc9;
+      --primary: #7ec4f4;
+      --primary-strong: #68b4e8;
+      --secondary: #91a7ff;
+      --success: #7fe3b3;
+      --error: #ff8c8c;
+      --radius-xl: 32px;
+      --radius-lg: 24px;
+      --radius-md: 18px;
+      --radius-sm: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      min-height: 100%;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Noto Sans JP", "Noto Sans", "Hiragino Sans", "Yu Gothic UI", sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      padding: 32px 20px 120px;
+      overflow-x: hidden;
+    }
+
+    .background-grid {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .background-grid {
+      opacity: 0.08;
+    }
+
+    .app-shell {
+      position: relative;
+      z-index: 1;
+      max-width: 920px;
+      margin: 0 auto;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .panel {
+      position: relative;
+      overflow: hidden;
+      background: var(--bg-elevated);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+    }
+
+    .gate-shell {
+      position: relative;
+      z-index: 1;
+      max-width: 520px;
+      margin: 8vh auto 0;
+    }
+
+    .gate-card {
+      padding: 28px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .gate-title {
+      margin: 0;
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      line-height: 1.1;
+      letter-spacing: -0.04em;
+    }
+
+    .gate-text {
+      margin: 0;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    .gate-visual {
+      width: 72px;
+      height: 72px;
+      color: var(--primary);
+    }
+
+    .gate-form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .gate-error {
+      min-height: 24px;
+      margin: 0;
+      color: var(--error);
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .controls-panel {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      z-index: 5;
+      width: min(640px, calc(100vw - 24px));
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+      margin-bottom: 0;
+      background: rgba(26, 31, 38, 0.92);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 22px 44px rgba(0, 0, 0, 0.32);
+    }
+
+    #controls {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    button {
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .mode-button {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 8px 10px;
+      border-radius: var(--radius-md);
+      text-align: center;
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--text);
+      min-height: 84px;
+    }
+
+    .mode-button .mode-title {
+      display: block;
+      font-weight: 700;
+      font-size: 0.74rem;
+      line-height: 1.2;
+      letter-spacing: 0.01em;
+      color: var(--text-muted);
+    }
+
+    .mode-copy {
+      min-width: 0;
+      width: 100%;
+    }
+
+    .mode-button.active {
+      background: rgba(126, 196, 244, 0.12);
+      border-color: rgba(126, 196, 244, 0.34);
+    }
+
+    .mode-visual {
+      width: 34px;
+      height: 34px;
+      flex: 0 0 auto;
+      color: var(--text-muted);
+      opacity: 0.95;
+    }
+
+    .mode-button.active .mode-title,
+    .mode-button.active .mode-visual {
+      color: var(--primary);
+    }
+
+    .card {
+      padding: 24px;
+    }
+
+    .quiz-card {
+      display: grid;
+      gap: 18px;
+      text-align: left;
+    }
+
+    .quiz-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .quiz-chip-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .quiz-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: var(--surface);
+      color: var(--text-muted);
+      border: 1px solid var(--line);
+      font-size: 0.92rem;
+    }
+
+    .quiz-chip strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .progress-wrap {
+      position: relative;
+      width: min(280px, 100%);
+      padding-top: 18px;
+    }
+
+    .progress {
+      position: relative;
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      position: absolute;
+      inset: 0 auto 0 0;
+      border-radius: inherit;
+      background: var(--success);
+    }
+
+    .progress-bonus {
+      position: absolute;
+      right: 0;
+      top: 0;
+      color: var(--success);
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      opacity: 0;
+      transform: translateY(0);
+      pointer-events: none;
+    }
+
+    .progress-bonus.show {
+      animation: progressBonusFloat 0.65s ease-out forwards;
+    }
+
+    .prompt-block {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+    }
+
+    .prompt-label {
+      margin: 0 0 10px;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .prompt-text {
+      margin: 0;
+      font-size: clamp(1.05rem, 2vw, 1.28rem);
+      line-height: 1.8;
+      color: var(--text);
+    }
+
+    .answer-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: stretch;
+    }
+
+    input {
+      flex: 1 1 260px;
+      min-width: 0;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: 18px;
+      padding: 16px 18px;
+      outline: none;
+      font-size: 1rem;
+    }
+
+    input:focus {
+      border-color: rgba(126, 196, 244, 0.52);
+      background: var(--surface-strong);
+    }
+
+    .primary-button {
+      padding: 16px 22px;
+      border-radius: 18px;
+      background: var(--primary);
+      color: #0b2230;
+      font-weight: 700;
+    }
+
+    .choices-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .choice-button {
+      padding: 18px;
+      border-radius: 20px;
+      text-align: left;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      color: var(--text);
+      font-weight: 600;
+      min-height: 68px;
+      line-height: 1.5;
+    }
+
+    .choice-button.correct {
+      border-color: var(--success);
+    }
+
+    .choice-button.incorrect {
+      border-color: var(--error);
+      animation: choiceShake 0.28s ease-in-out 1;
+    }
+
+    @keyframes progressBonusFloat {
+      0% {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      20% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+    }
+
+    @keyframes choiceShake {
+      0%, 100% {
+        transform: translateX(0);
+      }
+      25% {
+        transform: translateX(-3px);
+      }
+      50% {
+        transform: translateX(3px);
+      }
+      75% {
+        transform: translateX(-2px);
+      }
+    }
+
+    .result {
+      min-height: 30px;
+      margin-top: 6px;
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.01em;
+    }
+
+    .helper-note {
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      margin: 0;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .meta-card {
+      padding: 16px 18px;
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      border: 1px solid var(--line);
+    }
+
+    .meta-label {
+      margin: 0 0 6px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .meta-value {
+      margin: 0;
+      font-size: 1.05rem;
+      line-height: 1.5;
+      font-weight: 700;
+    }
+
+    .result.success {
+      color: var(--success);
+    }
+
+    .result.error {
+      color: var(--error);
+    }
+
+    @media (max-width: 780px) {
+      body {
+        padding: 18px 14px 116px;
+      }
+
+      #controls {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .choices-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .meta-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .card,
+      .controls-panel {
+        padding: 12px;
+      }
+
+      .controls-panel {
+        bottom: 12px;
+        width: calc(100vw - 16px);
+        padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
+      }
+
+      .mode-button {
+        min-height: 76px;
+        padding: 10px 6px 8px;
+      }
+
+      .mode-visual {
+        width: 30px;
+        height: 30px;
+      }
+
+      .mode-button .mode-title {
+        font-size: 0.68rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<svg class="background-grid" viewBox="0 0 1600 900" aria-hidden="true">
+  <defs>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M 48 0 L 0 0 0 48" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1600" height="900" fill="url(#grid)"></rect>
+</svg>
+
+<section class="gate-shell" id="gateScreen">
+  <div class="gate-card panel">
+    <svg class="gate-visual" viewBox="0 0 80 80" aria-hidden="true">
+      <rect x="16" y="34" width="48" height="30" rx="10" fill="none" stroke="currentColor" stroke-width="2.5"></rect>
+      <path d="M28 34v-8c0-7.2 5.5-12 12-12s12 4.8 12 12v8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></path>
+      <circle cx="40" cy="48" r="4" fill="currentColor"></circle>
+    </svg>
+    <div>
+      <h1 class="gate-title">Vocabulary Quiz</h1>
+      <p class="gate-text">アクセスコードを入力すると、次回以降はそのまま開けます。</p>
+    </div>
+    <div class="gate-form">
+      <input id="accessCode" type="password" inputmode="numeric" placeholder="アクセスコードを入力">
+      <button class="primary-button" onclick="submitAccessCode()">開く</button>
+      <p class="gate-error" id="gateError"></p>
+    </div>
+  </div>
+</section>
+
+<main class="app-shell hidden" id="appShell">
+  <section class="controls-panel panel">
+    <div id="controls"></div>
+  </section>
+
+  <section class="card panel" id="quiz"></section>
+</main>
+
+<script>
+const SHEET_ID = '1jVf7SnTUsMpyjwOPHk8gJtM21F8HmYC6MFTjTUY04Aw';
+const SHEET_GID = '0';
+const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${SHEET_GID}`;
+const ACCESS_COOKIE = 'voc_access_granted';
+
+const MODE_LABELS = {
+  definition_to_word: '定義→英単語',
+  word_to_japanese: '英単語→日本語',
+  japanese_to_word: '日本語→英単語'
+};
+
+let entries = [];
+let accessCode = '';
+let mode = 'definition_to_word';
+let current = 0;
+let order = [];
+
+const controls = document.getElementById('controls');
+const gateScreen = document.getElementById('gateScreen');
+const appShell = document.getElementById('appShell');
+
+function parseGoogleVisualizationResponse(text) {
+  const prefix = 'google.visualization.Query.setResponse(';
+  const start = text.indexOf(prefix);
+  const end = text.lastIndexOf(');');
+
+  if (start === -1 || end === -1) {
+    throw new Error('Unexpected Google Sheets response.');
+  }
+
+  return JSON.parse(text.slice(start + prefix.length, end));
+}
+
+function normalizeCell(cell) {
+  if (!cell) return '';
+  const value = cell.f ?? cell.v ?? '';
+  return String(value).trim();
+}
+
+function normalizeEntry(row) {
+  const cells = row.c ?? [];
+  const word = normalizeCell(cells[0]);
+  const jp = normalizeCell(cells[1]);
+  const def = normalizeCell(cells[2]);
+  const example = normalizeCell(cells[3]);
+
+  if (!word || !jp || !def) {
+    return null;
+  }
+
+  return { word, jp, def, example };
+}
+
+async function loadSheetData() {
+  const response = await fetch(SHEET_URL);
+
+  if (!response.ok) {
+    throw new Error(`Failed to load sheet data: ${response.status}`);
+  }
+
+  const text = await response.text();
+  const payload = parseGoogleVisualizationResponse(text);
+  const rows = payload.table?.rows ?? [];
+
+  if (!rows.length) {
+    throw new Error('No rows found in sheet.');
+  }
+
+  accessCode = rows
+    .map(row => normalizeCell(row.c?.[4]))
+    .find(Boolean) || '';
+
+  entries = rows
+    .map(normalizeEntry)
+    .filter(Boolean);
+
+  if (!entries.length) {
+    throw new Error('No valid vocabulary rows found in sheet.');
+  }
+
+  if (!accessCode) {
+    throw new Error('Access code not found in password column.');
+  }
+}
+
+function setCookie(name, value, days) {
+  const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+}
+
+function getCookie(name) {
+  const prefix = `${name}=`;
+  const cookies = document.cookie ? document.cookie.split('; ') : [];
+  for (const cookie of cookies) {
+    if (cookie.startsWith(prefix)) {
+      return decodeURIComponent(cookie.slice(prefix.length));
+    }
+  }
+  return '';
+}
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+function escapeRegExp(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function getMaskCandidates(word) {
+  const lower = word.toLowerCase();
+  const forms = new Set([lower]);
+
+  forms.add(`${lower}s`);
+  forms.add(`${lower}es`);
+  forms.add(`${lower}ed`);
+  forms.add(`${lower}ing`);
+
+  if (lower.endsWith('e')) {
+    forms.add(`${lower}d`);
+    forms.add(`${lower.slice(0, -1)}ing`);
+  }
+
+  if (lower.endsWith('y') && lower.length > 1) {
+    const stem = lower.slice(0, -1);
+    forms.add(`${stem}ies`);
+    forms.add(`${stem}ied`);
+    forms.add(`${stem}ying`);
+  }
+
+  if (/[sxz]$/.test(lower) || /(sh|ch)$/.test(lower)) {
+    forms.add(`${lower}es`);
+  }
+
+  return [...forms].sort((a, b) => b.length - a.length);
+}
+
+function maskWord(text, word) {
+  if (!text || !word) return text;
+  const variants = getMaskCandidates(word);
+
+  return text.replace(/[A-Za-z]+/g, (token) => {
+    const matched = variants.find((variant) => token.toLowerCase() === variant);
+    return matched ? '_'.repeat(token.length) : token;
+  });
+}
+
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function getCurrentEntry() {
+  return entries[order[current]];
+}
+
+function getProgressWidth() {
+  if (!entries.length) return '0%';
+  return `${((current + 1) / entries.length) * 100}%`;
+}
+
+function renderMetaCards(items) {
+  return `
+    <div class="meta-grid">
+      ${items.map(item => `
+        <div class="meta-card">
+          <p class="meta-label">${item.label}</p>
+          <p class="meta-value">${item.value}</p>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderCard(label, promptTitle, promptText, body, metaItems = []) {
+  document.getElementById("quiz").innerHTML = `
+    <div class="quiz-card">
+      <div class="quiz-topbar">
+        <div class="quiz-chip-wrap">
+          <div class="quiz-chip"><strong>${MODE_LABELS[mode]}</strong></div>
+          <div class="quiz-chip">Question <strong>${current + 1}</strong> / ${entries.length}</div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bonus" id="progressBonus">+1</div>
+          <div class="progress" aria-hidden="true">
+            <div class="progress-bar" style="width: ${getProgressWidth()}"></div>
+          </div>
+        </div>
+      </div>
+      <div class="prompt-block">
+        <p class="prompt-label">${label}</p>
+        <p class="prompt-text"><strong>${promptTitle}</strong><br>${promptText}</p>
+      </div>
+      ${metaItems.length ? renderMetaCards(metaItems) : ''}
+      ${body}
+    </div>
+  `;
+}
+
+function renderLoadError(message) {
+  controls.innerHTML = '';
+  document.getElementById("quiz").innerHTML = `
+    <div class="quiz-card">
+      <div class="prompt-block">
+        <p class="prompt-label">Data Error</p>
+        <p class="prompt-text"><strong>シートを読み込めませんでした。</strong><br>${message}</p>
+      </div>
+    </div>
+  `;
+}
+
+function updateControls() {
+  controls.innerHTML = `
+    <button class="mode-button ${mode === 'definition_to_word' ? 'active' : ''}" onclick="setMode('definition_to_word')">
+      <span class="mode-copy">
+        <span class="mode-title">定義→英単語</span>
+      </span>
+      <svg class="mode-visual" viewBox="0 0 48 48" aria-hidden="true">
+        <rect x="8" y="9" width="32" height="30" rx="8" fill="none" stroke="currentColor" stroke-width="2"></rect>
+        <path d="M15 19h18M15 25h14M15 31h10" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"></path>
+      </svg>
+    </button>
+    <button class="mode-button ${mode === 'word_to_japanese' ? 'active' : ''}" onclick="setMode('word_to_japanese')">
+      <span class="mode-copy">
+        <span class="mode-title">英単語→日本語</span>
+      </span>
+      <svg class="mode-visual" viewBox="0 0 48 48" aria-hidden="true">
+        <path d="M10 24h22" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
+        <path d="M25 16l8 8-8 8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+    </button>
+    <button class="mode-button ${mode === 'japanese_to_word' ? 'active' : ''}" onclick="setMode('japanese_to_word')">
+      <span class="mode-copy">
+        <span class="mode-title">日本語→英単語</span>
+      </span>
+      <svg class="mode-visual" viewBox="0 0 48 48" aria-hidden="true">
+        <path d="M38 24H16" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
+        <path d="M23 16l-8 8 8 8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+    </button>
+  `;
+}
+
+function markChoice(button, isCorrect) {
+  button.classList.add(isCorrect ? 'correct' : 'incorrect');
+
+  if (!isCorrect) {
+    setTimeout(() => {
+      button.classList.remove('incorrect');
+    }, 900);
+  }
+}
+
+function showProgressBonus() {
+  const bonus = document.getElementById("progressBonus");
+  if (!bonus) return;
+  bonus.classList.remove("show");
+  void bonus.offsetWidth;
+  bonus.classList.add("show");
+}
+
+function handleCorrect() {
+  showProgressBonus();
+  setTimeout(() => nextQuestion(), 500);
+}
+
+function nextQuestion() {
+  current += 1;
+
+  if (current >= order.length) {
+    order = [...entries.keys()];
+    shuffle(order);
+    current = 0;
+  }
+
+  renderCurrentQuestion();
+}
+
+function getChoices(correct, pool) {
+  const uniquePool = pool.filter(Boolean);
+  const set = new Set([correct]);
+
+  while (set.size < Math.min(4, uniquePool.length)) {
+    set.add(uniquePool[Math.floor(Math.random() * uniquePool.length)]);
+  }
+
+  const choices = [...set];
+  shuffle(choices);
+  return choices;
+}
+
+function renderChoiceButtons(choices) {
+  return `
+    <div class="choices-grid">
+      ${choices.map(choice => `<button class="choice-button" data-choice="${escapeHtml(choice)}">${escapeHtml(choice)}</button>`).join('')}
+    </div>
+  `;
+}
+
+function bindChoiceButtons() {
+  document.querySelectorAll('.choice-button').forEach((button) => {
+    button.addEventListener('click', () => {
+      checkChoice(button, button.dataset.choice || '');
+    });
+  });
+}
+
+function showDefinitionToWord() {
+  const entry = getCurrentEntry();
+  const maskedDefinition = maskWord(entry.def, entry.word);
+  const maskedExample = maskWord(entry.example, entry.word);
+
+  renderCard(
+    'Definition',
+    maskedDefinition,
+    maskedExample || 'この定義と例文に合う英単語を入力してください。',
+    `
+      <div class="answer-row">
+        <input id="answer" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="英単語を入力">
+        <button class="primary-button" onclick="checkDefinitionToWord()">答え合わせ</button>
+      </div>
+      <div id="result" class="result"></div>
+    `
+  );
+
+  document.getElementById("answer").addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      checkDefinitionToWord();
+    }
+  });
+}
+
+function checkDefinitionToWord() {
+  const user = document.getElementById("answer").value.trim().toLowerCase();
+  const correct = getCurrentEntry().word.toLowerCase();
+  const result = document.getElementById("result");
+
+  result.className = 'result';
+
+  if (user === correct) {
+    result.textContent = '正解！';
+    result.classList.add('success');
+    handleCorrect();
+    return;
+  }
+
+  result.textContent = `不正解… ${getCurrentEntry().word}`;
+  result.classList.add('error');
+}
+
+function showWordToJapanese() {
+  const entry = getCurrentEntry();
+  const choices = getChoices(entry.jp, entries.map(item => item.jp));
+
+  renderCard(
+    'Word',
+    entry.word,
+    '',
+    renderChoiceButtons(choices)
+  );
+
+  bindChoiceButtons();
+}
+
+function showJapaneseToWord() {
+  const entry = getCurrentEntry();
+  const choices = getChoices(entry.word, entries.map(item => item.word));
+
+  renderCard(
+    'Japanese',
+    entry.jp,
+    '',
+    renderChoiceButtons(choices)
+  );
+
+  bindChoiceButtons();
+}
+
+function checkChoice(button, selected) {
+  const entry = getCurrentEntry();
+  const correct = mode === 'word_to_japanese' ? entry.jp : entry.word;
+
+  if (selected === correct) {
+    markChoice(button, true);
+    handleCorrect();
+  } else {
+    markChoice(button, false);
+  }
+}
+
+function renderCurrentQuestion() {
+  if (!entries.length) {
+    renderLoadError('Google Sheets の単語データを読み込めていません。');
+    return;
+  }
+
+  if (mode === 'definition_to_word') {
+    showDefinitionToWord();
+    return;
+  }
+
+  if (mode === 'word_to_japanese') {
+    showWordToJapanese();
+    return;
+  }
+
+  showJapaneseToWord();
+}
+
+function setMode(nextMode) {
+  if (!entries.length) {
+    renderLoadError('Google Sheets の単語データを読み込めていません。');
+    return;
+  }
+
+  mode = nextMode;
+  current = 0;
+  order = [...entries.keys()];
+  shuffle(order);
+  updateControls();
+  renderCurrentQuestion();
+}
+
+function unlockApp() {
+  gateScreen.classList.add('hidden');
+  appShell.classList.remove('hidden');
+  setMode(mode);
+}
+
+function submitAccessCode() {
+  const input = document.getElementById('accessCode');
+  const error = document.getElementById('gateError');
+  const code = input.value.trim();
+
+  if (!accessCode) {
+    error.textContent = 'アクセスコードを取得できませんでした。パスワード列を確認してください。';
+    return;
+  }
+
+  if (code === accessCode) {
+    setCookie(ACCESS_COOKIE, '1', 30);
+    error.textContent = '';
+    unlockApp();
+    return;
+  }
+
+  error.textContent = 'アクセスコードが違います。';
+  input.select();
+}
+
+// ===== 簡易テスト =====
+(function test() {
+  const sample = getChoices('a', ['a', 'b', 'c', 'd', 'e']);
+  console.assert(sample.includes('a'), 'choices must include correct');
+})();
+
+async function initializeApp() {
+  try {
+    await loadSheetData();
+    console.info(`Loaded ${entries.length} rows from Google Sheets.`);
+  } catch (error) {
+    entries = [];
+    accessCode = '';
+    console.warn('Failed to load question data.', error);
+  }
+
+  if (getCookie(ACCESS_COOKIE) === '1') {
+    if (entries.length && accessCode) {
+      unlockApp();
+    } else {
+      gateScreen.classList.add('hidden');
+      appShell.classList.remove('hidden');
+      renderLoadError('Google Sheets の単語・日本語・定義・例文列とパスワード列を確認してください。');
+    }
+    return;
+  }
+
+  document.getElementById('accessCode').addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      submitAccessCode();
+    }
+  });
+}
+
+initializeApp();
+</script>
+
+</body>
+</html>
